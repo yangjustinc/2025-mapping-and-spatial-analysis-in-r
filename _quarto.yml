@@ -1,0 +1,13 @@
+project:
+  type: website
+  output-dir: docs   # good for GitHub Pages "docs" deployment
+
+website:
+  title: "Mapping and Spatial Analysis in R"
+  site-url: https://yangjustinc.github.io/2025-mapping-and-spatial-analysis-in-r/
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    code-copy: true
