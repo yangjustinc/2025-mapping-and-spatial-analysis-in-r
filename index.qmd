@@ -3,22 +3,7 @@ title: "Mapping and Spatial Analysis in R"
 subtitle: "A Tutorial for the UCL R User Group"
 author: "Justin Yang"
 date: today
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    toc-location: left
-    code-fold: show
-    code-tools: true
-    number-sections: true
-    theme: cosmo
-    css: styles.css
-execute:
-  warning: false
-  message: false
-  cache: true
 editor: visual
-bibliography: references.bib
 ---
 
 ## Overview {.unnumbered}

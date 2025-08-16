@@ -1,6 +1,6 @@
 project:
   type: website
-  output-dir: docs   # good for GitHub Pages "docs" deployment
+  output-dir: docs
 
 website:
   title: "Mapping and Spatial Analysis in R"
@@ -10,4 +10,22 @@ format:
   html:
     theme: cosmo
     toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: show
+    code-tools: true
     code-copy: true
+    number-sections: true
+    css: styles.css
+
+execute:
+  warning: false
+  message: false
+  cache: true
+
+bibliography: references.bib
+
+# ensure these files are copied into docs/
+resources:
+  - styles.css
+  - references.bib
