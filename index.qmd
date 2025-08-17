@@ -12,14 +12,12 @@ Spatial data analysis in R brings together several different types of tasks: rea
 
 We will start by working with vector data (points, lines, and polygons), then move on to raster data (continuous surfaces such as elevation or temperature). Along the way, we will explore how to produce both static and interactive maps, and then carry out some introductory forms of spatial analysis, including tests for spatial autocorrelation and geostatistical techniques.
 
-The tutorial does not assume prior experience with spatial analysis, but it does assume some familiarity with R. The examples are designed to be reproducible and to build a foundation that you can adapt to your own datasets. By the end, you should feel confident about:
+The tutorial does not assume prior experience with spatial analysis, but it does assume some familiarity with R. The examples are designed to be reproducible and to build a foundation that you can adapt to your own datasets. By the end, you should feel more confident about:
 
 -   Importing and exploring spatial data in R.
 -   Creating high-quality maps to visualise your data.
 -   Understanding when and why spatial statistical methods are needed.
 -   Applying some of the most commonly used exploratory and modelling techniques.
-
-The focus is on giving you a practical toolkit: enough conceptual grounding to understand what each step is doing, but with the emphasis on hands-on examples that you can extend to your own work.
 
 ::: callout-important
 ## What You'll Need
@@ -86,7 +84,7 @@ cities <- data.frame(
 )
 
 # Convert to spatial data
-cities_sf <- st_as_sf(cities, 
+cities_sf <- st_as_sf(cities,
                       coords = c("longitude", "latitude"),
                       crs = 4326)  # WGS84 coordinate system
 
@@ -101,35 +99,24 @@ print(cities_sf)
 
 ## Understanding Spatial Data
 
-### Learning Objectives
-
--   Distinguish between spatial and non-spatial data
--   Understand vector vs. raster data models
--   Recognise coordinate reference systems
--   Apply spatial thinking to research questions
-
 ### What Makes Data "Spatial"?
 
-Not all data is spatial, but a great deal of the information we work with has a geographic dimension. What makes data *spatial* is that each observation is tied to a location, either through coordinates (such as latitude and longitude) or through a defined area (such as a district, postcode, or country). This spatial reference allows us to place the data on a map and to consider relationships in terms of distance, proximity, and adjacency.
+Not all data is spatial, but a great deal of the information we work with has a geographic dimension. What makes data spatial is that each observation is tied to a location, either through coordinates (such as latitude and longitude) or through a defined area (such as a district, postcode, or country). This spatial reference allows us to place the data on a map and to consider relationships in terms of distance, proximity, and adjacency.
 
 ::: callout-note
 ## Tobler's First Law of Geography
 
 > "Everything is related to everything else, but near things are more related than distant things."
-
-This principle underlies all spatial analysis and explains why location matters in data science.
 :::
 
-### Activity: Spatial Data Detective
-
-**Objective**: Develop "spatial thinking" by identifying spatial components in common datasets.
+### Spatial Data Detective
 
 **Your Task**: For each dataset below, decide if it contains spatial information and explain how location might affect the analysis:
 
 **Dataset A**: Customer purchase records with postal codes\
-Dataset **B**: Stock market prices over time\
-Dataset **C**: Twitter sentiment analysis with GPS coordinates\
-**Dataset D**: University enrollment numbers by year\
+**Dataset B**: Stock market prices over time\
+**Dataset C**: Twitter sentiment analysis with GPS coordinates\
+**Dataset D**: University enrolment numbers by year\
 **Dataset E**: Air quality readings from monitoring stations
 
 ::: {.callout-tip collapse="true"}
@@ -150,7 +137,7 @@ Dataset **C**: Twitter sentiment analysis with GPS coordinates\
 -   *Spatial component*: GPS coordinates provide exact locations
 -   *Analysis opportunities*: Sentiment hotspots, geographic opinion mapping, event location analysis
 
-**Dataset D: University enrollment by year** ❌ **NOT INHERENTLY SPATIAL**
+**Dataset D: University enrolment by year** ❌ **NOT INHERENTLY SPATIAL**
 
 -   *Why not*: Just temporal trends without location
 -   *Could become spatial*: If you added student home addresses, university locations, or regional enrollment patterns
@@ -159,15 +146,11 @@ Dataset **C**: Twitter sentiment analysis with GPS coordinates\
 
 -   *Spatial component*: Monitoring stations have fixed locations
 -   *Analysis opportunities*: Pollution interpolation, exposure mapping, environmental justice analysis
-
-**Key Insight**: Many datasets become more valuable when you add spatial context!
 :::
 
-### Activity: Vector vs. Raster Data Models
+### Vector vs. Raster Data Models
 
-**Objective**: Understand the two fundamental spatial data models.
-
-Spatial data in R comes in two main forms: vector and raster. Vector data represents discrete objects such as points (e.g. hospital locations), lines (e.g. roads), or polygons (e.g. administrative boundaries). Raster data, by contrast, represents continuous surfaces such as temperature, elevation, or satellite imagery. Being clear on this distinction is important because it determines how you store, manipulate, and analyse your data.
+Spatial data in R comes in two main forms: vector and raster. Vector data represents discrete objects such as points (e.g. hospital locations), lines (e.g. roads), or polygons (e.g. administrative boundaries). Raster data, by contrast, represents continuous surfaces such as temperature, elevation, or satellite imagery.
 
 ```{r}
 #| label: data-models-demo
@@ -178,13 +161,15 @@ print(paste("Cities (points):", nrow(cities_sf), "features"))
 print(paste("Countries (polygons):", nrow(world), "features"))
 
 # Visualise vector data
-tm_shape(world) + 
+tm_shape(world) +
   tm_borders(col = "gray") +
   tm_shape(cities_sf) +
-  tm_symbols(col = "red", 
-             size = "population", 
-             size.scale = tm_scale_continuous(values.scale = 2),
-             title.size = "Population") +
+  tm_symbols(
+    col = "red",
+    size = "population",
+    size.scale = tm_scale_continuous(values.scale = 2),
+    title.size = "Population"
+  ) +
   tm_title("Vector Data: Discrete Features")
 ```
 
@@ -193,15 +178,21 @@ tm_shape(world) +
 
 # Raster data: Continuous grid of values
 # Create example elevation raster
-elevation <- rast(ncols = 100, nrows = 100, 
-                  xmin = -180, xmax = 180, ymin = -90, ymax = 90)
+elevation <- rast(
+  ncols = 100,
+  nrows = 100,
+  xmin = -180,
+  xmax = 180,
+  ymin = -90,
+  ymax = 90
+)
 
 # Simulate realistic elevation pattern
 set.seed(123)
 coords <- crds(elevation)
-distances_to_mountains <- sqrt((coords[,1] - 0)^2 + (coords[,2] - 0)^2)
-values(elevation) <- pmax(0, 3000 * exp(-distances_to_mountains/30) + 
-                         rnorm(ncell(elevation), 0, 200))
+distances_to_mountains <- sqrt((coords[, 1] - 0)^2 + (coords[, 2] - 0)^2)
+values(elevation) <- pmax(0, 3000 * exp(-distances_to_mountains / 30) +
+                            rnorm(ncell(elevation), 0, 200))
 
 plot(elevation, main = "Raster Data: Continuous Grid Values")
 ```
@@ -221,34 +212,101 @@ plot(elevation, main = "Raster Data: Continuous Grid Values")
 -   Environmental variables (temperature, precipitation, elevation)
 -   Satellite imagery and remote sensing data
 -   Continuous phenomena across space
--   Modeling and analysis requiring regular grids
+-   Modelling and analysis requiring regular grids
 :::
 
-### Challenge: Apply to Your Domain
+### Coordinate Reference Systems (CRS)
 
-Think about your research domain and answer:
+#### What is a CRS?
 
-1.  What spatial data sources are available in your field?
-2.  Are your phenomena better represented as vector or raster data?
-3.  What spatial questions could you investigate?
-4.  How might location bias affect your sampling or analysis?
+A CRS defines how spatial data relates to real locations on Earth. Since Earth is round but maps are flat, we need mathematical transformations to project 3D coordinates onto 2D surfaces. CRS includes:
+
+-   **Geographic CRS**: Uses latitude/longitude (e.g. WGS84, EPSG:4326)
+-   **Projected CRS**: Uses a flat coordinate system (e.g. UTM, EPSG:32617)
+-   **Local CRS**: Specific to a region (e.g. Statistics Canada Lambert, EPSG:3347)
+
+Using CRS correctly is crucial because: - It ensures spatial data aligns correctly on maps - It allows accurate distance and area calculations - It enables spatial operations like buffering, intersection, and joins
+
+```{r}
+#| label: crs-demo
+
+# Check the CRS of our data
+cat("World countries CRS:\n")
+st_crs(world)
+
+cat("\nCities CRS:\n")
+st_crs(cities_sf)
+```
+
+```{r}
+#| label: crs-importance
+
+# Demonstrate projection effects
+world_mercator <- st_transform(world, 3857)  # Web Mercator
+world_mollweide <- st_transform(world, "+proj=moll")  # Mollweide
+
+# Compare projections
+mercator_map <- tm_shape(world_mercator) + tm_borders() +
+  tm_title("Web Mercator\n(distorts area)")
+
+mollweide_map <- tm_shape(world_mollweide) + tm_borders() +
+  tm_title("Mollweide\n(preserves area)")
+
+tmap_arrange(mercator_map, mollweide_map, ncol = 2)
+```
+
+```{r}
+#| label: when-transform
+
+# For distance calculations, use projected CRS
+toronto <- cities_sf[cities_sf$name == "Toronto", ]
+
+# Wrong: distance in degrees (meaningless)
+montreal <- cities_sf[cities_sf$name == "Montreal", ]
+dist_degrees <- st_distance(toronto, montreal)
+cat("Distance in degrees:", dist_degrees, "\n")
+
+# Right: distance in meters
+toronto_utm <- st_transform(toronto, 32617)  # UTM Zone 17N
+montreal_utm <- st_transform(montreal, 32617)
+dist_meters <- st_distance(toronto_utm, montreal_utm)
+cat("Distance in meters:", round(as.numeric(dist_meters) / 1000), "km\n")
+```
+
+::: callout-note
+## Key CRS considerations
+
+### When to use different CRS
+
+-   4326 (WGS84): Global data, web mapping, data storage
+-   Projected CRS: Measurements, area calculations, buffers
+-   Local CRS: Region-specific analysis for maximum accuracy
+
+### Common transformations
+
+-   st_transform(data, 4326) - Convert to lat/lng
+-   st_transform(data, 3857) - Convert to Web Mercator
+-   st_transform(data, 32617) - Convert to UTM (Eastern North America)
+:::
 
 ------------------------------------------------------------------------
 
-## Your First Spatial Map
-
-### Learning Objectives
-
--   Load and Visualise spatial data
--   Create basic thematic maps
--   Understand map design principles
--   Apply appropriate symbology and color schemes
+## Mapping
 
 ### The Grammar of Maps
 
-Just as `ggplot2` uses a grammar of graphics, `tmap` provides a grammar of maps with consistent syntax for different map elements.
+Just as `ggplot2` uses a grammar of graphics, `tmap` provides a grammar of maps with consistent syntax for different map elements. This allows you to build complex maps step by step, adding layers and customising styles in a structured way.
 
-### Activity: Basic Mapping
+### Key Functions
+
+-   `tm_shape()`: Defines the spatial data to be plotted
+-   `tm_polygons()`: Adds polygon layers (e.g. countries, regions)
+-   `tm_lines()`: Adds line layers (e.g. roads, rivers)
+-   `tm_symbols()`: Adds point layers (e.g. cities, landmarks)
+-   `tm_text()`: Adds text labels to features
+-   `tm_layout()`: Customises overall map appearance (title, legend, etc.)
+
+### Basic Mapping
 
 **Objective**: Create your first spatial visualisation
 
@@ -259,14 +317,16 @@ Just as `ggplot2` uses a grammar of graphics, `tmap` provides a grammar of maps 
 plot(world["pop_est"])  # Base R quick plot
 
 # Better with tmap
-tm_shape(world) + 
-  tm_polygons("pop_est",
-              title = "Population",
-              palette = "viridis") +
+tm_shape(world) +
+  tm_polygons(
+    "pop_est",
+    fill.legend = tm_legend("Population"),
+    fill.scale = tm_scale("viridis")
+  ) +
   tm_title("World Population 2020")
 ```
 
-### Activity: Mapping Challenge
+### Mapping Challenge
 
 **Choose your experience level:**
 
@@ -282,13 +342,11 @@ tm_shape(world) +
 tm_shape(world) +
   tm_polygons(
     fill = "gdp_md",
-    title = "GDP (millions USD)",
-    style = "quantile",
-    palette = "YlOrRd",
-    n = 5
+    fill.scale = tm_scale_intervals(values = "brewer.yl_or_rd", style = "quantile"),
+    fill.legend = tm_legend(title = "GDP (millions USD)")
   ) +
-  tm_layout(title = "World GDP Distribution",
-            legend.position = c("left", "bottom"))
+  tm_title("World GDP Distribution", position = tm_pos_out("center", "top"))
+
 ```
 
 **Key Concepts Learned**:
@@ -308,7 +366,12 @@ tm_shape(world) +
 tm_shape(world) +
   tm_polygons(
     fill = "gdp_md",
-    fill.scale  = tm_scale_intervals(style  = "fisher", values = "-RdYlBu", n      = 5),
+    fill.scale  = tm_scale_intervals(
+      values = "-brewer.rd_yl_bu",
+      midpoint = NA,
+      style = "fisher",
+      n = 5
+    ),
     fill.legend = tm_legend(title = "GDP (millions USD)"),
     col  = "white",
     lwd  = 0.5
@@ -324,11 +387,9 @@ tm_shape(world) +
     lwd         = 0.3
   ) +
   tm_text(text = "name", ymod = 1.2, size = 0.7) +
-  tm_layout(
-    title = "World GDP with Major Cities",
-    frame = FALSE,
-    legend.position = c("left", "bottom")
-  )
+  tm_title("World GDP with Major Cities") +
+  tm_layout(frame = FALSE,
+            legend.position = c("left", "bottom"))
 ```
 
 **Key Concepts Learned**:
@@ -348,44 +409,50 @@ tm_shape(world) +
 
 # Create continental analysis
 world_analysis <- world %>%
-  filter(!is.na("gdp_md"), 
-         !is.na(continent),
-         continent != "Seven seas (open ocean)") %>%
-  mutate(
-    continent = case_when(
+  dplyr::filter(
+    !is.na(gdp_md),
+    !is.na(continent),
+    continent != "Seven seas (open ocean)"
+  ) %>%
+  dplyr::mutate(
+    continent = dplyr::case_when(
       continent == "North America" ~ "N. America",
-      continent == "South America" ~ "S. America", 
+      continent == "South America" ~ "S. America",
       TRUE ~ continent
     ),
-    gdp_per_capita = (gdp_md * 1000000) / pop_est
+    gdp_per_capita = (gdp_md * 1e6) / pop_est
   )
 
-# Faceted map by continent
-tm_shape(world_analysis) + 
-  tm_polygons("gdp_per_capita", 
-              title = "GDP per capita\n(USD)",
-              style = "fisher",
-              palette = "viridis",
-              border.col = "white") +
-  tm_facets(by = "continent", 
-            free.coords = TRUE,
-            ncol = 3) +
+# Faceted map by continent (v4)
+tm_shape(world_analysis) +
+  tm_polygons(
+    fill = "gdp_per_capita",
+    fill.scale  = tm_scale_intervals(
+      values = "viridis",
+      style = "fisher"
+    ),
+    fill.legend = tm_legend(title = "GDP per capita\n(USD)"),
+    col  = "white"   # (v4: border.col -> col)
+  ) +
+  tm_facets(by = "continent", free.coords = TRUE, ncol = 3) +
   tm_title("GDP per capita by continent") +
-  tm_layout(panel.label.size = 1.2,
-            panel.label.bg.color = "black",
-            panel.label.color = "white")
+  tm_layout(
+    panel.label.size = 1.2,
+    panel.label.bg.color = "black",
+    panel.label.color = "white"
+  )
 
-# Summary statistics
+# Summary statistics (unchanged)
 gdp_summary <- world_analysis %>%
-  st_drop_geometry() %>%
-  group_by(continent) %>%
-  summarise(
-    countries = n(),
+  sf::st_drop_geometry() %>%
+  dplyr::group_by(continent) %>%
+  dplyr::summarise(
+    countries = dplyr::n(),
     mean_gdp_pc = mean(gdp_per_capita, na.rm = TRUE),
     median_gdp_pc = median(gdp_per_capita, na.rm = TRUE),
-    .groups = 'drop'
+    .groups = "drop"
   ) %>%
-  arrange(desc(mean_gdp_pc))
+  dplyr::arrange(dplyr::desc(mean_gdp_pc))
 
 print(gdp_summary)
 ```
@@ -398,27 +465,9 @@ print(gdp_summary)
 -   Integrating statistical summaries
 :::
 
-### Challenge: Design Principles
-
-Consider these cartographic principles:
-
-1.  **Color choice**: How does palette selection affect interpretation?
-2.  **Classification**: Why might quantiles vs. natural breaks matter?
-3.  **Visual hierarchy**: Which elements should draw attention first?
-4.  **Audience**: How would your map differ for scientists vs. public?
-
 ------------------------------------------------------------------------
 
 ## Spatial Operations
-
-### Learning Objectives
-
--   Perform fundamental spatial operations (buffer, intersect, join)
--   Understand spatial relationships and predicates
--   Apply spatial operations to solve real-world problems
--   Handle coordinate reference systems appropriately
-
-### The Big Three Operations
 
 We'll focus on three fundamental spatial operations that solve most spatial analysis problems:
 
@@ -426,9 +475,7 @@ We'll focus on three fundamental spatial operations that solve most spatial anal
 2.  **Intersect**: "What overlaps with what?"
 3.  **Spatial Join**: "How can we connect spatial features based on location?"
 
-### Activity: Spatial Operations Demonstration
-
-**Objective**: Learn core spatial operations with Canadian cities
+These operations allow us to manipulate and analyse spatial data effectively, answering questions about proximity, overlap, and relationships between different spatial features.
 
 ```{r}
 #| label: spatial-operations-demo
@@ -452,14 +499,159 @@ tm_shape(provinces) +
   tm_borders(col = "gray") +
   tm_shape(st_transform(city_buffers, 4326)) +
   tm_borders(col = "blue", lwd = 2) +
-  tm_fill(col = "blue", alpha = 0.2) +
+  tm_fill(col = "blue", fill_alpha = 0.2) +
   tm_shape(cities_sf) +
   tm_symbols(col = "red", size = 1) +
   tm_text("name", ymod = 1.2) +
   tm_title("Cities with 100km Buffers")
 ```
 
-### Activity: Real-World Problem Solving
+## Spatial Relationships
+
+Spatial predicates are functions that test relationships between geometries, returning TRUE or FALSE. Think of them as questions you can ask about spatial features: "Does this city lie within this county?" or "Do these roads intersect?" These simple questions become powerful analytical tools when applied systematically across datasets.
+
+In R, we can test these relationships using functions from the `sf` package. Here are some common spatial predicates:
+
+-   `st_intersects()`: "Do these features overlap in any way?" (broadest, most commonly used)
+-   `st_within()`: "Is feature A completely inside feature B?" (strict containment)
+-   `st_contains()`: Reverse of within - "Does feature A completely contain feature B?"
+-   `st_touches()`: "Do features share a boundary but not interior space?" (adjacent polygons)
+-   `st_crosses()`: "Do lines intersect?" (roads crossing administrative boundaries)
+-   `st_overlaps()`: "Do features share some but not all space?" (partially overlapping regions)
+
+### Spatial Predicates
+
+**Objective**: Learn to test and understand spatial relationships
+
+```{r}
+#| label: spatial-predicates
+
+# Load Canadian provinces for relationship testing
+provinces <- ne_states(country = "canada", returnclass = "sf")
+
+# Test different spatial relationships
+cat("Spatial Relationship Tests:\n")
+
+# Which cities are within provinces?
+within_results <- st_within(cities_sf, provinces)
+cat("Cities within provinces:\n")
+for (i in 1:nrow(cities_sf)) {
+  province_idx <- within_results[[i]]
+  if (length(province_idx) > 0) {
+    cat("  ", cities_sf$name[i], "is within", provinces$name[province_idx], "\n")
+  } else {
+    cat("  ",
+        cities_sf$name[i],
+        "is not within any province (likely boundary/water)\n")
+  }
+}
+
+# Test intersections (broader than within)
+intersects_results <- st_intersects(cities_sf, provinces)
+cat("\nIntersection test (should match within for points):\n")
+cat("Cities intersecting provinces:",
+    sum(lengths(intersects_results) > 0),
+    "out of",
+    nrow(cities_sf),
+    "\n")
+
+# Create buffers to test more relationships
+cities_projected <- st_transform(cities_sf, 3347)  # Canada Lambert
+city_buffers <- st_buffer(cities_projected, dist = 50000)  # 50km buffers
+city_buffers_geo <- st_transform(city_buffers, 4326)
+
+# Test overlaps between buffers
+overlap_matrix <- st_overlaps(city_buffers_geo)
+cat("\nCity buffer overlaps:\n")
+for (i in 1:nrow(cities_sf)) {
+  overlapping <- overlap_matrix[[i]]
+  if (length(overlapping) > 0) {
+    overlapping_names <- cities_sf$name[overlapping]
+    cat(
+      "  ",
+      cities_sf$name[i],
+      "buffer overlaps with:",
+      paste(overlapping_names, collapse = ", "),
+      "\n"
+    )
+  }
+}
+
+# Visualize relationships
+tm_shape(provinces) +
+  tm_borders(col = "gray") +
+  tm_shape(city_buffers_geo) +
+  tm_borders(col = "blue", lwd = 2) +
+  tm_fill(col = "blue", fill_alpha = 0.2) +
+  tm_shape(cities_sf) +
+  tm_symbols(col = "red", size = 1) +
+  tm_text("name", ymod = 1.2) +
+  tm_title("Spatial Relationships: Cities, Buffers, and Provinces")
+```
+
+### CRS in Spatial Operations
+
+Coordinate Reference Systems (CRS) are crucial for spatial operations. If your data is in geographic coordinates (degrees), operations like buffering or distance calculations will yield incorrect results. Always project your data to an appropriate CRS before performing spatial operations.
+
+```{r}
+#| label: crs-effects
+
+# Demonstrate CRS effects on buffers
+toronto <- cities_sf[cities_sf$name == "Toronto", ]
+
+# Wrong: Buffer in geographic coordinates (degrees)
+buffer_degrees <- st_buffer(toronto, dist = 0.1)  # 0.1 degrees
+area_degrees <- st_area(buffer_degrees)
+
+# Right: Buffer in projected coordinates (meters)
+toronto_projected <- st_transform(toronto, 3347)  # Statistics Canada Lambert
+buffer_meters <- st_buffer(toronto_projected, dist = 11000)  # 11km (approximately 0.1 degrees at Toronto latitude)
+area_meters <- st_area(buffer_meters)
+
+# Transform back for comparison
+buffer_meters_geo <- st_transform(buffer_meters, 4326)
+
+cat("Buffer Comparison:\n")
+cat("Geographic buffer area:",
+    round(as.numeric(area_degrees), 2),
+    "square degrees\n")
+cat("Projected buffer area:",
+    round(as.numeric(area_meters) / 1000000, 2),
+    "square kilometers\n")
+
+# Visualize the difference
+comparison_map <- tm_shape(buffer_degrees) +
+  tm_borders(col = "red", lwd = 3) +
+  tm_fill(fill = "red", fill_alpha = 0.3) +
+  tm_shape(buffer_meters_geo) +
+  tm_borders(col = "blue", lwd = 3) +
+  tm_fill(fill = "blue", fill_alpha = 0.3) +
+  tm_shape(toronto) +
+  tm_symbols(col = "black", size = 2) +
+  tm_title("Buffer Comparison: Geographic (red) vs Projected (blue)") +
+  tm_layout(legend.show = FALSE)
+
+print(comparison_map)
+
+# Distance calculation comparison
+montreal <- cities_sf[cities_sf$name == "Montreal", ]
+
+# Geographic distance (ellipsoidal - accurate)
+dist_geographic <- st_distance(toronto, montreal)
+
+# Projected distance
+montreal_projected <- st_transform(montreal, 3347)
+dist_projected <- st_distance(toronto_projected, montreal_projected)
+
+cat("\nDistance Calculations:\n")
+cat("Geographic CRS distance:", round(as.numeric(dist_geographic) / 1000, 1), "km\n")
+cat("Projected CRS distance:", round(as.numeric(dist_projected) / 1000, 1), "km\n")
+cat("Difference:", round(abs(
+  as.numeric(dist_geographic) - as.numeric(dist_projected)
+) / 1000, 1), "km\n")
+```
+
+### Real-World Problem Solving
 
 **Scenario**: A coffee chain wants to expand in Canada while avoiding oversaturated markets.
 
@@ -474,15 +666,15 @@ tm_shape(provinces) +
 
 **Your Tasks**:
 
-1.  **Novice Level**:
+1.  **Novice**:
     -   Create exclusion zones around existing competitors
     -   Identify cities outside these zones
     -   Visualise suitable locations
-2.  **Intermediate Level**:
+2.  **Intermediate**:
     -   Complete novice tasks
     -   Calculate market opportunity metrics
     -   Rank locations by attractiveness
-3.  **Advanced Level**:
+3.  **Advanced**:
     -   Complete intermediate tasks
     -   Build multi-criteria decision model
     -   Optimise network of new locations
@@ -501,7 +693,7 @@ print("Existing competitor locations:")
 print(competitors[c("name", "brand")])
 ```
 
-## Novice Solution
+## Novice
 
 **Step 1: Create Exclusion Zones**
 
@@ -510,24 +702,44 @@ print(competitors[c("name", "brand")])
 
 # Project to appropriate CRS for Canada (meters)
 canada_crs <- 3347  # Statistics Canada Lambert
-cities_proj <- st_transform(cities_sf, canada_crs)
-competitors_proj <- st_transform(competitors, canada_crs)
+cities_proj <- sf::st_transform(cities_sf, canada_crs)
+competitors_proj <- sf::st_transform(competitors, canada_crs)
 
-# Create 25km exclusion zones
-exclusion_zones <- st_buffer(competitors_proj, dist = 25000)
+# Create 25 km exclusion zones (in metres)
+exclusion_zones <- sf::st_buffer(competitors_proj, dist = 25000)
 
 # Visualise exclusion zones
-tm_shape(st_transform(exclusion_zones, 4326)) +
+tm_shape(st_as_sfc(st_bbox(
+  c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326
+))) + tm_polygons(col = NA, fill_alpha = 0) +
+  tm_shape(st_transform(exclusion_zones, 4326)) +
   tm_borders(col = "red", lwd = 2) +
-  tm_fill(col = "red", alpha = 0.3) +
+  tm_fill(fill = "red", fill.alpha = 0.3) +
   tm_shape(cities_sf) +
-  tm_symbols(col = "blue", 
-             size = "population", 
-             size.scale = tm_scale_continuous(values.scale = 2),
-             title.size = "Population") +
+  tm_symbols(
+    size        = "population",
+    size.scale  = tm_scale_continuous(values.scale = 2),
+    size.legend = tm_legend(title = "Population"),
+    fill        = "blue",
+    col         = "white",
+    lwd         = 0.5
+  ) +
   tm_shape(competitors) +
-  tm_symbols(col = "red", size = 1.5, shape = 4) +
-  tm_title("Coffee Shop Expansion: Exclusion Zones")
+  tm_symbols(size = 1.5,
+             shape = 4,
+             col = "red") +
+  tm_title("Coffee Shop Expansion: Exclusion Zones") +
+  tm_view(bbox = st_bbox(c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326)) 
 ```
 
 **Step 2: Find Available Cities**
@@ -547,7 +759,7 @@ available_cities_wgs84 <- st_transform(available_cities, 4326)
 print(available_cities_wgs84[c("name", "population")])
 ```
 
-## Intermediate Solution
+## Intermediate
 
 **Step 3: Market Opportunity Analysis**
 
@@ -583,19 +795,39 @@ print(market_analysis)
 #| label: opportunity-map
 
 # Create opportunity map
-tm_shape(st_transform(available_cities, 4326)) +
-  tm_symbols(col = "market_opportunity", 
-             size = "population",
-             size.scale = tm_scale_continuous(values.scale = 3),
-             palette = "viridis",
-             title.col = "Market\nOpportunity",
-             title.size = "Population") +
+tm_shape(st_as_sfc(st_bbox(
+  c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326
+))) + tm_polygons(col = NA, fill_alpha = 0) +
+  tm_shape(sf::st_transform(available_cities, 4326)) +
+  tm_symbols(
+    fill        = "market_opportunity",
+    fill.scale  = tm_scale_continuous(values = "viridis"),
+    fill.legend = tm_legend(title = "Market\nOpportunity"),
+    size        = "population",
+    size.scale  = tm_scale_continuous(values.scale = 3),
+    size.legend = tm_legend(title = "Population"),
+    col         = "white",
+    lwd         = 0.3
+  ) +
   tm_shape(competitors) +
-  tm_symbols(col = "red", size = 2, shape = 4) +
-  tm_title("Coffee Chain Expansion Opportunities")
+  tm_symbols(col = "red",
+             size = 2,
+             shape = 4) +
+  tm_title("Coffee Chain Expansion Opportunities") +
+  tm_view(bbox = st_bbox(c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326))
 ```
 
-## Advanced Solution
+## Advanced
 
 **Step 5: Multi-Criteria Decision Analysis**
 
@@ -692,45 +924,42 @@ print(optimal_network %>%
   mutate(composite_score = round(composite_score, 3)))
 
 # Visualise final strategy
-tm_shape(st_transform(optimal_network, 4326)) +
-  tm_dots(col = "green", size = 2, shape = 19) +
-  tm_text("name", ymod = 1.5, col = "green", size = 1.2) +
+tm_shape(st_as_sfc(st_bbox(
+  c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326
+))) +
+  tm_polygons(col = NA, fill_alpha = 0) +
+  tm_shape(st_transform(optimal_network, 4326)) +
+  tm_dots(col = "green",
+          size = 2,
+          shape = 19) +
+  tm_text("name",
+          ymod = 1.5,
+          col = "green",
+          size = 1.2) +
   tm_shape(competitors) +
-  tm_dots(col = "red", size = 2, shape = 4) +
+  tm_dots(col = "red",
+          size = 2,
+          shape = 4) +
   tm_text("name", ymod = -1.5, col = "red") +
-  tm_layout(title = "Optimal Coffee Chain Network Strategy",
-            legend.show = FALSE)
+  tm_title("Optimal Coffee Chain Network Strategy") +
+  tm_layout(legend.show = FALSE) +
+  tm_view(bbox = st_bbox(c(
+    xmin = -160,
+    xmax = -40,
+    ymin = 35,
+    ymax = 85
+  ), crs = 4326))
 ```
 :::
-
-### Challenge: Spatial Problem Solving
-
-Apply spatial operations to a problem in your domain:
-
-1.  Identify a location-based question in your research
-2.  Choose appropriate spatial operations to answer it
-3.  Consider what data you would need
-4.  Describe your analysis workflow
-
-Example domains:
-
--   **Public Health**: Hospital catchment areas, disease clustering
--   **Ecology**: Species habitat connectivity, protected area gaps
--   **Urban Planning**: Service accessibility, land use conflicts
--   **Business**: Market analysis, supply chain optimisation
 
 ------------------------------------------------------------------------
 
 ## Raster Analysis
-
-### Learning Objectives
-
--   Understand raster data structure and applications
--   Perform raster calculations and classifications
--   Extract values from rasters at point locations
--   Combine raster and vector data in analysis
-
-### Introduction to Raster Data
 
 Raster data represents the world as a continuous surface divided into a grid of cells, or pixels, each of which stores a value. This is different from vector data, which represents discrete objects such as points, lines, and polygons. Rasters are best suited to variables that change gradually across space, such as elevation, rainfall, temperature, vegetation, or remotely sensed imagery from satellites.
 
@@ -743,9 +972,7 @@ Rasters can be single-layer, where each cell stores one value, or multi-layer, w
 
 In practice, rasters are extremely powerful because they allow us to represent continuous phenomena, run cell-based calculations, and combine different surfaces through map algebra. For example, you might calculate slope from an elevation raster, estimate average rainfall within administrative boundaries, or overlay pollution and population rasters to identify at-risk areas.
 
-### Activity: Working with Elevation Data
-
-**Objective**: Learn basic raster operations using elevation data
+### Working with Elevation Data
 
 ```{r}
 #| label: raster-basics
@@ -782,7 +1009,7 @@ values(elevation) <- pmax(0, elevation_values)
 plot(elevation, main = "North American Elevation (simulated)")
 ```
 
-### Activity: Environmental Analysis Challenge
+### Environmental Analysis Challenge
 
 **Scenario**: Analyse environmental conditions for renewable energy development
 
@@ -908,11 +1135,15 @@ total_solar_area <- global(solar_area, "sum", na.rm = TRUE)
 
 # Combined visualisation with cities
 tm_shape(suitability_index) +
-  tm_raster(palette = c("gold", "blue", "darkgreen"),
-            title = "Energy Type",
-            labels = c("Wind", "Solar", "Both")) +
+  tm_raster(
+    col.scale  = tm_scale_categorical(
+      values = c("gold", "blue", "darkgreen"),
+      labels = c("Wind", "Solar", "Both")
+    ),
+    col.legend = tm_legend(title = "Energy Type")
+  ) +
   tm_shape(cities_sf) +
-  tm_symbols(col = "white", size = 0.8, border.col = "black") +
+  tm_symbols(fill = "white", col = "black", size = 0.8) +  # border.col -> col
   tm_text("name", size = 0.6, ymod = 1.2) +
   tm_title("Renewable Energy Potential in Canada")
 
@@ -922,31 +1153,15 @@ cat("Solar suitable area:", round(total_solar_area$sum), "km²\n")
 ```
 :::
 
-### Challenge: Raster Applications
-
-Consider how raster analysis applies to your research:
-
-1.  What continuous phenomena are important in your domain?
-2.  What environmental variables might affect your study system?
-3.  How could you combine multiple raster layers for analysis?
-4.  What spatial scales are appropriate for your questions?
-
 ------------------------------------------------------------------------
 
 ## Creating Maps for Communication
-
-### Learning Objectives
-
--   Design maps for different audiences and purposes
--   Create interactive visualisations for exploration
--   Produce publication-quality static figures
--   Understand principles of effective cartographic communication
 
 ### From Analysis to Communication
 
 The best spatial analysis is meaningless if you can't communicate your findings effectively. This section focuses on the transition from exploratory analysis to polished communication.
 
-### Activity: Three Approaches to Map Communication
+### Three Approaches to Map Communication
 
 **Objective**: Learn to match visualisation approach to communication goals
 
@@ -965,28 +1180,38 @@ world_urban <- world %>%
     pop_category = case_when(
       pop_est < 5e6 ~ "Small (<5M)",
       pop_est < 25e6 ~ "Medium (5-25M)",
-      pop_est < 100e6 ~ "Large (25-100M)", 
+      pop_est < 100e6 ~ "Large (25-100M)",
       TRUE ~ "Mega (>100M)"
     ),
-    pop_category = factor(pop_category, 
-                         levels = c("Small (<5M)", "Medium (5-25M)", 
-                                  "Large (25-100M)", "Mega (>100M)"))
+    pop_category = factor(
+      pop_category,
+      levels = c(
+        "Small (<5M)",
+        "Medium (5-25M)",
+        "Large (25-100M)",
+        "Mega (>100M)"
+      )
+    )
   )
 
 # Story map with clear narrative
 story_map <- tm_shape(world_urban) +
-  tm_polygons(col = "pop_category",
-              palette = c("lightblue", "yellow", "orange", "red"),
-              title = "Population Category") +
+  tm_polygons(
+    fill        = "pop_category",
+    fill.scale  = tm_scale_categorical(values = c("lightblue", "yellow", "orange", "red")),
+    fill.legend = tm_legend(title = "Population Category")
+  ) +
   tm_title("The Growing World: Countries by Population Size") +
   tm_layout(
-    title.size = 1.4,
+    title.size      = 1.4,
     legend.position = c("left", "bottom"),
-    frame = FALSE
+    frame           = FALSE
   ) +
-  tm_credits("Four countries now exceed 100M people: China, India, USA, Indonesia",
-             position = c("center", "bottom"),
-             size = 0.8)
+  tm_credits(
+    "Four countries now exceed 100M people: China, India, USA, Indonesia",
+    tm_pos_out = c("center", "bottom"),
+    size = 0.8
+  )
 
 print(story_map)
 ```
@@ -1005,51 +1230,56 @@ print(story_map)
 ```{r}
 #| label: interactive-dashboard
 
-# Create interactive map with leaflet
-interactive_dashboard <- leaflet() %>%
-  # Add base map tiles
-  addTiles() %>%
+pal_pop <- colorNumeric(palette = "viridis", domain = world_urban$pop_est)
+
+interactive_dashboard <- leaflet(options = leafletOptions(worldCopyJump = FALSE, continuousWorld = FALSE)) %>%
+  addTiles(options = tileOptions(noWrap = TRUE)) %>%
   
-  # Add polygons for world urban areas, colored by population estimate
+  # Polygons coloured by population estimate
   addPolygons(
     data = world_urban,
-    fillColor = ~colorNumeric("YlOrRd", world_urban$pop_est)(pop_est),
+    fillColor = ~ pal_pop(pop_est),
     weight = 1,
     opacity = 1,
     color = "white",
     fillOpacity = 0.7,
-    highlightOptions = highlightOptions(weight = 2, color = "black", bringToFront = TRUE),
-    label = ~paste("Population:", pop_est),
+    highlightOptions = highlightOptions(
+      weight = 2,
+      color = "black",
+      bringToFront = TRUE
+    ),
+    label = ~ paste("Population:", pop_est),
     group = "Population"
   ) %>%
   
-  # Add points for major cities, with size scaled by population
+  # Points for major cities
   addCircleMarkers(
     data = cities_sf,
-    radius = ~sqrt(population) / 100,   # adjust scaling factor as needed
+    radius = ~ sqrt(population) / 100,
+    # same scaling as yours
     fillColor = "blue",
     fillOpacity = 0.7,
     stroke = FALSE,
-    label = ~paste(name, "<br>", "Population:", population),
+    label = ~ paste(name, "<br>", "Population:", population),
     group = "Major Cities"
   ) %>%
   
-  # Add legends
+  # Legend (reuse the same palette)
   addLegend(
-    pal = colorNumeric("YlOrRd", world_urban$pop_est),
+    pal = pal_pop,
     values = world_urban$pop_est,
     title = "Population Estimate",
     position = "bottomright"
   ) %>%
   
-  # Add layer control to toggle between layers
+  # Layer control
   addLayersControl(
     overlayGroups = c("Population", "Major Cities"),
     options = layersControlOptions(collapsed = FALSE)
   )
 
-# Display dashboard
-interactive_dashboard
+interactive_dashboard %>%
+  setView(lng = 0, lat = 20, zoom = 2)
 ```
 
 **Dashboard Principles**:
@@ -1072,7 +1302,7 @@ interactive_dashboard
 publication_map <- ggplot(world_urban) +
   geom_sf(aes(fill = log10(pop_est)), color = "white", size = 0.1) +
   scale_fill_viridis_c(
-    name = "Population\n(log₁₀ scale)",
+    name = "Population\n(log scale)",
     na.value = "grey90",
     labels = function(x) {
       formatted <- paste0("10^", round(x, 1))
@@ -1113,9 +1343,7 @@ print(publication_map)
 -   Suitable for black-and-white printing if needed
 :::
 
-### Activity: Design Your Signature Map
-
-**Objective**: Apply design principles to create a map for your research domain
+### Design Your Signature Map
 
 **Your Task**: Choose a dataset relevant to your field and create a map that:
 
@@ -1135,25 +1363,9 @@ print(publication_map)
 -   [ ] Consistent style throughout the visualisation
 :::
 
-### Challenge: Communication Strategy
-
-Plan your communication approach:
-
-1.  Who is your audience and what do they need to know?
-2.  What story does your spatial data tell?
-3.  Which format (static, interactive, story map) best serves your purpose?
-4.  How will you ensure accessibility and clarity?
-
 ------------------------------------------------------------------------
 
 ## Spatial Statistics
-
-### Learning Objectives
-
--   Understand spatial autocorrelation and its implications
--   Detect spatial clusters and hotspots
--   Perform spatial interpolation for prediction
--   Apply point pattern analysis techniques
 
 ::: callout-note
 ## Moving Beyond Maps
@@ -1163,17 +1375,13 @@ While maps are essential for exploring spatial data, spatial statistics provides
 
 ### Spatial Autocorrelation
 
-**Concept**: Tobler's First Law quantified - measuring how similar nearby observations are
-
 One of the most important principles in spatial analysis is that “near things are more related than distant things.” This idea, sometimes called Tobler’s First Law of Geography, means that values measured in neighbouring areas are often more similar than would be expected if location had no influence. For example, neighbouring districts might share similar levels of air pollution, adjacent farmland might have comparable soil fertility, and houses on the same street might have similar market values.
 
 This phenomenon known as spatial autocorrelation is critical to detect and account for, because it violates the assumption of independence that underlies many standard statistical techniques. If we ignore spatial autocorrelation, our results may be misleading: we might overstate the significance of a relationship, or fail to capture the true structure of the data.
 
 R provides tools to formally test for spatial autocorrelation. A widely used measure is Moran’s I, which summarises whether high (or low) values cluster together across space more than expected by chance. A positive Moran’s I indicates clustering of similar values, while a negative Moran’s I suggests a checkerboard pattern where high and low values are interspersed. A value close to zero implies little or no spatial autocorrelation.
 
-#### Activity: Economic Clustering Analysis
-
-**Objective**: Test whether countries with similar economic development cluster together
+#### Economic Clustering Analysis
 
 ::: panel-tabset
 ## Brief
@@ -1213,12 +1421,16 @@ moran_result <- moran.test(world_econ$gdp_per_capita, world_weights, zero.policy
 
 cat("Global Moran's I Results:\n")
 cat("Moran's I statistic:", round(moran_result$estimate[1], 4), "\n")
-cat("Expected value (random):", round(moran_result$estimate[2], 4), "\n") 
-cat("P-value:", format(moran_result$p.value, scientific = TRUE), "\n\n")
+cat("Expected value (random):",
+    round(moran_result$estimate[2], 4),
+    "\n")
+cat("P-value:",
+    format(moran_result$p.value, scientific = TRUE),
+    "\n\n")
 
 # Interpretation
-if(moran_result$p.value < 0.05) {
-  if(moran_result$estimate[1] > 0) {
+if (moran_result$p.value < 0.05) {
+  if (moran_result$estimate[1] > 0) {
     cat("Interpretation: Significant positive spatial autocorrelation\n")
     cat("Countries with similar GDP per capita cluster together.\n")
   }
@@ -1241,18 +1453,26 @@ world_econ$lisa_p <- lisa_result[, 5]
 
 world_econ$cluster_type <- case_when(
   world_econ$lisa_p > 0.05 ~ "Not Significant",
-  world_econ$lisa_i > 0 & world_econ$gdp_per_capita > mean(world_econ$gdp_per_capita) ~ "High-High",
-  world_econ$lisa_i > 0 & world_econ$gdp_per_capita < mean(world_econ$gdp_per_capita) ~ "Low-Low",
-  world_econ$lisa_i < 0 & world_econ$gdp_per_capita > mean(world_econ$gdp_per_capita) ~ "High-Low", 
-  world_econ$lisa_i < 0 & world_econ$gdp_per_capita < mean(world_econ$gdp_per_capita) ~ "Low-High",
+  world_econ$lisa_i > 0 &
+    world_econ$gdp_per_capita > mean(world_econ$gdp_per_capita) ~ "High-High",
+  world_econ$lisa_i > 0 &
+    world_econ$gdp_per_capita < mean(world_econ$gdp_per_capita) ~ "Low-Low",
+  world_econ$lisa_i < 0 &
+    world_econ$gdp_per_capita > mean(world_econ$gdp_per_capita) ~ "High-Low",
+  world_econ$lisa_i < 0 &
+    world_econ$gdp_per_capita < mean(world_econ$gdp_per_capita) ~ "Low-High",
   TRUE ~ "Not Significant"
 )
 
 # Visualise clusters
 tm_shape(world_econ) +
-  tm_polygons(col = "cluster_type",
-              palette = c("red", "blue", "lightblue", "pink", "white"),
-              title = "Economic Clusters") +
+  tm_polygons(
+    fill        = "cluster_type",
+    fill.scale  = tm_scale_categorical(values = c(
+      "red", "blue", "lightblue", "pink", "white"
+    )),
+    fill.legend = tm_legend(title = "Economic Clusters")
+  ) +
   tm_title("Local Economic Clustering (LISA)")
 
 # Summary
@@ -1267,11 +1487,9 @@ print(cluster_summary)
 
 ### Hotspot Analysis
 
-Hotspot analysis is used to identify areas where unusually high or low values of a variable cluster together in space. Instead of just asking whether values are spatially autocorrelated overall, as with Moran’s I, hotspot analysis highlights *where* those clusters occur. This makes it especially useful for applications in public health, criminology, environmental science, and urban planning.
+Hotspot analysis is used to identify areas where unusually high or low values of a variable cluster together in space. Instead of just asking whether values are spatially autocorrelated overall, as with Moran’s I, hotspot analysis highlights where those clusters occur. This makes it especially useful for applications in public health, criminology, environmental science, and urban planning.
 
-#### Activity: Urban Crime Patterns
-
-**Objective**: Identify statistically significant crime hotspots
+#### Urban Crime Patterns
 
 ::: panel-tabset
 ## Brief
@@ -1287,30 +1505,29 @@ Hotspot analysis is used to identify areas where unusually high or low values of
 
 # Create simulated crime data
 set.seed(2024)
-n_crimes <- 250  # Fixed: was missing <- and value
+n_crimes <- 250
 
-# Create crime hotspot centers  
+# Create crime hotspot centers
 hotspot_centers <- data.frame(
   x = c(-79.42, -79.38, -79.45),
   y = c(43.68, 43.65, 43.71),
-  intensity = c(0.3, 0.3, 0.2)  # Reduced to ensure background crimes
+  intensity = c(0.3, 0.3, 0.2)
 )
 
 # Generate crime points around hotspots
 crime_data <- data.frame()
-for(i in 1:nrow(hotspot_centers)) {
+for (i in 1:nrow(hotspot_centers)) {
   n_points <- round(n_crimes * hotspot_centers$intensity[i])
   x_coords <- rnorm(n_points, hotspot_centers$x[i], 0.008)
   y_coords <- rnorm(n_points, hotspot_centers$y[i], 0.008)
   
-  crime_data <- rbind(crime_data, data.frame(
-    x = x_coords, y = y_coords, hotspot = i
-  ))
+  crime_data <- rbind(crime_data, data.frame(x = x_coords, y = y_coords, hotspot = i))
 }
 
 # Add random background crimes
 n_background <- n_crimes - nrow(crime_data)
-if(n_background > 0) {  # Fixed: this line was cut off
+if (n_background > 0) {
+  # Fixed: this line was cut off
   background_crimes <- data.frame(
     x = runif(n_background, -79.5, -79.3),
     y = runif(n_background, 43.6, 43.75),
@@ -1324,8 +1541,8 @@ crime_sf <- st_as_sf(crime_data, coords = c("x", "y"), crs = 4326)
 
 # Basic visualisation
 tm_shape(crime_sf) +
-  tm_symbols(size = 0.2, alpha = 0.6) +
-  tm_layout(title = "Crime Incident Locations")
+  tm_symbols(size = 0.2, fill_alpha = 0.6) +
+  tm_title("Crime Incident Locations")
 ```
 
 **Kernel Density Analysis**
@@ -1347,19 +1564,23 @@ bandwidth <- 200  # 200 meters
 crime_coords <- st_coordinates(crime_utm)
 
 density_matrix <- matrix(0, nrow = grid_size, ncol = grid_size)
-for(i in 1:length(grid_x)) {
-  for(j in 1:length(grid_y)) {
-    distances <- sqrt((crime_coords[,1] - grid_x[i])^2 + 
-                     (crime_coords[,2] - grid_y[j])^2)
-    weights <- exp(-0.5 * (distances/bandwidth)^2)
+for (i in 1:length(grid_x)) {
+  for (j in 1:length(grid_y)) {
+    distances <- sqrt((crime_coords[, 1] - grid_x[i])^2 +
+                        (crime_coords[, 2] - grid_y[j])^2)
+    weights <- exp(-0.5 * (distances / bandwidth)^2)
     density_matrix[j, i] <- sum(weights)
   }
 }
 
 # Create raster
 density_raster <- rast(
-  ncols = grid_size, nrows = grid_size,
-  xmin = bbox[1], xmax = bbox[3], ymin = bbox[2], ymax = bbox[4],
+  ncols = grid_size,
+  nrows = grid_size,
+  xmin = bbox[1],
+  xmax = bbox[3],
+  ymin = bbox[2],
+  ymax = bbox[4],
   crs = "EPSG:32617"
 )
 values(density_raster) <- as.vector(density_matrix)
@@ -1369,10 +1590,15 @@ density_wgs84 <- project(density_raster, "EPSG:4326")
 
 # Visualise hotspots
 tm_shape(density_wgs84) +
-  tm_raster(palette = "Reds", title = "Crime Density", alpha = 0.8) +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "brewer.reds"),
+    col.legend = tm_legend(title = "Crime Density"),
+    col_alpha  = 0.8
+  ) +
   tm_shape(crime_sf) +
-  tm_symbols(size = 0.1, alpha = 0.4) +
+  tm_symbols(size = 0.1, fill_alpha = 0.4) +
   tm_title("Crime Hotspot Analysis")
+
 ```
 :::
 
@@ -1384,7 +1610,7 @@ Inverse distance weighting (IDW) estimates values as a weighted average of surro
 
 Kriging is a geostatistical method that uses both the distance and the overall spatial autocorrelation structure of the data, modelled through a variogram. Kriging not only produces predictions but also provides an estimate of uncertainty at each location.
 
-#### Activity: Environmental Monitoring
+#### Environmental Monitoring
 
 **Objective**: Predict air quality at unmeasured locations
 
@@ -1448,11 +1674,16 @@ stations_sf <- st_as_sf(stations, coords = c("x", "y"), crs = 4326)
 
 # Visualise monitoring network
 tm_shape(stations_sf) +
-  tm_symbols(col = "pm25", 
-             size = 1.5, 
-             palette = "plasma",
-             title.col = "PM2.5 (μg/m³)") +
+  tm_symbols(
+    fill        = "pm25",
+    fill.scale  = tm_scale_continuous(values = "plasma"),
+    fill.legend = tm_legend(title = "PM2.5 (μg/m³)"),
+    size        = 1.5,
+    col         = "white",
+    lwd         = 0.3
+  ) +
   tm_title("Air Quality Monitoring Network")
+
 ```
 
 **Inverse Distance Weighting (IDW)**
@@ -1497,10 +1728,17 @@ values(idw_raster) <- idw_predictions
 
 # Visualise IDW results
 tm_shape(idw_raster) +
-  tm_raster(palette = "plasma", title = "PM2.5 (μg/m³)", alpha = 0.8) +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "plasma"),
+    col.legend = tm_legend(title = "PM2.5 (μg/m³)"),
+    col_alpha  = 0.8
+  ) +
   tm_shape(stations_sf) +
-  tm_symbols(col = "white", size = 0.5, border.col = "black") +
+  tm_symbols(fill = "white",
+             col  = "black",
+             size = 0.5) +
   tm_title("Air Quality - IDW Interpolation")
+
 ```
 
 **Kriging Interpolation**
@@ -1535,19 +1773,26 @@ values(kriging_raster) <- kriging_result$var1.pred
 
 # Visualisation comparison
 idw_map <- tm_shape(idw_raster) +
-  tm_raster(palette = "plasma", title = "PM2.5") +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "plasma"),
+    col.legend = tm_legend(title = "PM2.5")
+  ) +
   tm_shape(stations_sf) +
-  tm_symbols(col = "white", size = 0.3) +
+  tm_symbols(fill = "white", size = 0.3) +
   tm_title("IDW Interpolation") +
   tm_layout(legend.show = FALSE)
 
 kriging_map <- tm_shape(kriging_raster) +
-  tm_raster(palette = "plasma", title = "PM2.5") +
+  tm_raster(
+    col.scale  = tm_scale_continuous(values = "plasma"),
+    col.legend = tm_legend(title = "PM2.5")
+  ) +
   tm_shape(stations_sf) +
-  tm_symbols(col = "white", size = 0.3) +
+  tm_symbols(fill = "white", size = 0.3) +
   tm_title("Kriging Interpolation")
 
 tmap_arrange(idw_map, kriging_map, ncol = 2)
+
 
 # Calculate prediction statistics
 cat("\nInterpolation Comparison:\n")
@@ -1557,17 +1802,6 @@ cat("Kriging - Mean:", round(mean(kriging_result$var1.pred), 2),
     "SD:", round(sd(kriging_result$var1.pred), 2), "\n")
 ```
 :::
-
-### Challenge: Choose Your Statistical Adventure
-
-Select a spatial statistical method most relevant to your research:
-
-1.  **Spatial Autocorrelation**: Do similar values cluster in your data?
-2.  **Hotspot Analysis**: Where do significant concentrations occur?
-3.  **Interpolation**: How do you predict values between measurements?
-4.  **Point Patterns**: What processes generate your spatial arrangements?
-
-Design a brief analysis plan using your own data or research questions.
 
 ------------------------------------------------------------------------
 
@@ -1608,9 +1842,7 @@ spatial_project/
     └── methods_documentation.md
 ```
 
-### Activity: Spatial Analysis to Answer a Research Question
-
-**Objective**: Apply multiple spatial analysis techniques to answer a research question
+### Spatial Analysis to Answer a Research Question
 
 ::: panel-tabset
 ## Project Brief
@@ -1684,7 +1916,7 @@ gdp_map <- tm_shape(analysis_data) +
     ),
     fill.legend = tm_legend(title = "GDP per capita")
   ) +
-  tm_layout(title = "Economic Development")
+  tm_title("Economic Development")
 
 
 pop_map <- tm_shape(analysis_data) +
@@ -1698,7 +1930,7 @@ pop_map <- tm_shape(analysis_data) +
     ),
     fill.legend = tm_legend(title = "Population density (per km²)")
   ) +
-  tm_layout(title = "Population Density")
+  tm_title("Population Density")
 
 elev_map <- tm_shape(analysis_data) +
   tm_polygons(
@@ -1711,7 +1943,7 @@ elev_map <- tm_shape(analysis_data) +
     ),
     fill.legend = tm_legend(title = "Elevation (m)")
   ) +
-  tm_layout(title = "Average Elevation")
+  tm_title("Average Elevation")
 
 dev_map <- tm_shape(analysis_data) +
   tm_polygons(
@@ -1719,7 +1951,7 @@ dev_map <- tm_shape(analysis_data) +
     fill.scale = tm_scale_categorical(values = c("red", "orange", "yellow", "green")),
     fill.legend = tm_legend(title = "Development Level")
   ) +
-  tm_layout(title = "Development Categories")
+  tm_title("Development Categories")
 
 # Arrange multiple maps
 tmap_arrange(gdp_map, pop_map, elev_map, dev_map, ncol = 2)
@@ -1802,24 +2034,32 @@ print(regional_summary)
 
 # Create comprehensive final map
 final_map <- tm_shape(analysis_data) +
-  tm_polygons("development_level",
-              palette = c("#d73027", "#fc8d59", "#fee08b", "#91cf60"),
-              title = "Development Level") +
+  tm_polygons(
+    fill        = "development_level",
+    fill.scale  = tm_scale_categorical(values = c(
+      "#d73027", "#fc8d59", "#fee08b", "#91cf60"
+    )),
+    fill.legend = tm_legend(title = "Development Level")
+  ) +
   tm_shape(cities_sf) +
-  tm_symbols(size = "population",
-             col = "black",
-             alpha = 0.6,
-             size.scale = tm_scale_continuous(values.scale = 2),
-             title.size = "City Population") +
+  tm_symbols(
+    size        = "population",
+    size.scale  = tm_scale_continuous(values.scale = 2),
+    size.legend = tm_legend(title = "City Population"),
+    col         = "black",
+    alpha       = 0.6
+  ) +
   tm_text("name", size = 0.6, ymod = 1.3) +
   tm_title("Global Development Patterns: Economic, Demographic, and Urban Factors") +
   tm_layout(
-    title.size = 1.4,
-    legend.position = c("left", "bottom"),
+    title.size        = 1.4,
+    legend.position   = c("left", "bottom"),
     legend.title.size = 1.1
   ) +
-  tm_credits("Analysis combines economic data, population density, and urban hierarchies",
-             position = c("center", "bottom"))
+  tm_credits(
+    "Analysis combines economic data, population density, and urban hierarchies",
+    position = c("center", "bottom")
+  )
 
 print(final_map)
 
@@ -1832,23 +2072,6 @@ cat("4. Geographic factors (elevation) show weak correlation with development\n"
 cat("5. Urban centers often indicate broader regional development patterns\n")
 ```
 :::
-
-### Challenge: Your Research Application
-
-Design a spatial analysis workflow for your research domain:
-
-1.  **Define your research question** with spatial components
-2.  **Identify required datasets** and data sources
-3.  **Plan your analysis workflow** (operations, statistics, visualization)
-4.  **Consider reproducibility** and documentation needs
-5.  **Design your communication strategy** for results
-
-**Reflection Questions**:
-
--   How would spatial analysis change your research approach?
--   What new questions could you ask with spatial methods?
--   How would you validate your spatial analysis results?
--   What are the limitations and assumptions of spatial methods in your domain?
 
 ------------------------------------------------------------------------
 
@@ -1869,6 +2092,8 @@ You've completed an introduction to spatial analysis in R. You now have:
 -   [Spatial Data Science with R](https://r-spatial.org/book/)
 -   [Geocomputation with R](https://r.geocompx.org/)
 -   [Applied Spatial Data Analysis with R](https://asdar-book.org/)
+-   [R for Spatial Analysis](https://rspatial.org/r4spatial/)
+-   [Geographic Data Science with R](https://geographicdata.science/book/)
 
 **Domain-Specific Applications**:
 
