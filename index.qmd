@@ -2103,6 +2103,17 @@ You've completed an introduction to spatial analysis in R. You now have:
 -   [Spatial Econometrics in R](https://cran.r-project.org/web/views/Spatial.html)
 -   [RSpatial tutorials](https://rspatial.org/)
 
+**Additional Resources**:
+
+With thanks to Abbie Chapman, Joana Pereira Da Cruz, and Bin Chi:
+
+-   [Earthdata Search](https://search.earthdata.nasa.gov/search?q=CIESIN%20ESDIS)
+-   [Open Spatial Demographic Data and Research](https://www.worldpop.org/)
+-   [Digimap](https://digimap.edina.ac.uk/)
+-   [Free GIS Datasets](https://freegisdata.rtwilson.com/)
+-   [AddressBase Premium](https://www.ordnancesurvey.co.uk/products/addressbase-premium)
+-   [Earth Engine Data Catalog](https://developers.google.com/earth-engine/datasets/)
+
 ### Final Reflection
 
 Spatial analysis opens new perspectives on research questions across virtually every domain. The techniques you've learned provide a foundation, but the real power comes from applying spatial thinking to your specific research challenges.
