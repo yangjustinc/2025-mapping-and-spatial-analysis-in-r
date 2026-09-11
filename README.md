@@ -1,5 +1,7 @@
 # Mapping and Spatial Analysis in R
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22710469.svg)](https://doi.org/10.5281/zenodo.22710469)
+
 An introductory tutorial on mapping and spatial data analysis in **R**, developed for the **UCL R User Group**.
 
 The tutorial introduces the main concepts and tools needed to work with spatial data in R, from understanding spatial data structures and coordinate reference systems through to mapping, spatial operations, raster analysis and introductory spatial statistics.
@@ -13,6 +15,8 @@ The rendered tutorial is available here:
 An alternative version is also available on RPubs:
 
 **https://rpubs.com/yangjustinc/mapping-and-spatial-analysis-in-r-2025**
+
+The archived v1.0.0 release is available from Zenodo: **https://doi.org/10.5281/zenodo.22710469**.
 
 ## What the tutorial covers
 
