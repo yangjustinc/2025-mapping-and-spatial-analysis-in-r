@@ -4,3 +4,5 @@
 .Ruserdata
 /.quarto/
 /_site/
+# knitr chunk cache (regenerated locally on render)
+/mapping-and-spatial-analysis-in-r_cache/
